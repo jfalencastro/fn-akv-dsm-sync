@@ -75,24 +75,21 @@ def post_secret_to_dsm(token: str, payload: dict):
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("AKV → DSM secret sync iniciado")
+    logging.info("=== AKV → DSM FUNCTION STARTED ===")
 
     try:
+        logging.info("Reading request body...")
         body = req.get_json()
-    except ValueError:
-        return func.HttpResponse("Invalid JSON body", status_code=400)
+        logging.info(f"Payload recebido: {json.dumps(body)}")
 
-    required_fields = ["secret_name", "secret_value", "engine", "identity"]
-    for field in required_fields:
-        if field not in body:
-            return func.HttpResponse(
-                f"Missing required field: {field}",
-                status_code=400
-            )
-
-    try:
+        logging.info("Getting DSM token...")
         token = get_dsm_token()
+        logging.info("DSM token obtido com sucesso")
+
+        logging.info("Posting secret to DSM...")
         result = post_secret_to_dsm(token, body)
+
+        logging.info("Secret enviada com sucesso ao DSM")
 
         return func.HttpResponse(
             json.dumps({
@@ -103,9 +100,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             mimetype="application/json"
         )
 
-    except requests.exceptions.RequestException as e:
-        logging.error(str(e))
+    except Exception as e:
+        logging.exception("ERRO FATAL NA FUNCTION")
         return func.HttpResponse(
-            f"DSM request failed: {str(e)}",
-            status_code=500
+            json.dumps({
+                "status": "error",
+                "message": str(e)
+            }),
+            status_code=500,
+            mimetype="application/json"
         )
