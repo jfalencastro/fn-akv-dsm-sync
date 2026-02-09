@@ -1,7 +1,7 @@
 import azure.functions as func
 import logging
-import sys
+import requests
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info(str(sys.path))
+    logging.info("requests OK")
     return func.HttpResponse("OK")
