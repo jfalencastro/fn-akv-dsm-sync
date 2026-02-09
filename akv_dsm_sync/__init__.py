@@ -1,5 +1,6 @@
 import os
 import json
+import base64
 import logging
 import requests
 import azure.functions as func
@@ -8,8 +9,6 @@ import azure.functions as func
 DSM_BASE_URL = os.getenv("DSM_BASE_URL")
 DSM_CLIENT_ID = os.getenv("DSM_CLIENT_ID")
 DSM_CLIENT_SECRET = os.getenv("DSM_CLIENT_SECRET")
-DSM_ORG_ID = os.getenv("DSM_ORG_ID")
-DSM_SYSTEM_ID = os.getenv("DSM_SYSTEM_ID")
 
 
 def get_dsm_token():
@@ -28,45 +27,62 @@ def get_dsm_token():
     response = requests.post(url, data=payload, headers=headers, timeout=10)
     response.raise_for_status()
 
-    token = response.json().get("access_token")
-    return token
+    return response.json()["access_token"]
 
 
-def post_secret_to_dsm(token, secret_data):
-    url = f"{DSM_BASE_URL}/secret"
+def encode_secret_data(secret_value: str) -> str:
+    """
+    DSM exige que o campo Data seja um JSON válido codificado em base64
+    """
+    data_json = {
+        "value": secret_value
+    }
+
+    json_bytes = json.dumps(data_json).encode("utf-8")
+    return base64.b64encode(json_bytes).decode("utf-8")
+
+
+def post_secret_to_dsm(token: str, payload: dict):
+    url = f"{DSM_BASE_URL}/iso/sctm/secret"
 
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
 
-    payload = {
-        "name": secret_data["secret_name"],
-        "secret": secret_data["secret_value"],
-        "description": secret_data.get("description", ""),
-        "tags": secret_data.get("tags", []),
-        "organization_id": int(DSM_ORG_ID),
-        "system_id": int(DSM_SYSTEM_ID)
+    dsm_payload = {
+        "Name": payload["secret_name"],
+        "Identity": payload["identity"],
+        "Description": payload.get("description", ""),
+        "Engine": payload["engine"],
+        "Expiration_Date": payload.get("expiration_date"),
+        "renew_cloud_time": payload.get("renew_cloud_time"),
+        "renew_credential_time": payload.get("renew_credential_time"),
+        "renew_ephemeral_credential_time": payload.get("renew_ephemeral_credential_time"),
+        "Data": encode_secret_data(payload["secret_value"])
     }
 
-    response = requests.post(url, headers=headers, json=payload, timeout=10)
+    # Remove campos nulos (DSM é sensível a isso)
+    dsm_payload = {k: v for k, v in dsm_payload.items() if v is not None}
+
+    logging.info("Payload enviado ao DSM:")
+    logging.info(json.dumps(dsm_payload, indent=2))
+
+    response = requests.post(url, headers=headers, json=dsm_payload, timeout=10)
     response.raise_for_status()
 
     return response.json()
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("AKV → DSM sync triggered")
+    logging.info("AKV → DSM secret sync iniciado")
 
     try:
         body = req.get_json()
     except ValueError:
-        return func.HttpResponse(
-            "Invalid JSON body",
-            status_code=400
-        )
+        return func.HttpResponse("Invalid JSON body", status_code=400)
 
-    required_fields = ["secret_name", "secret_value"]
+    required_fields = ["secret_name", "secret_value", "engine", "identity"]
     for field in required_fields:
         if field not in body:
             return func.HttpResponse(
@@ -88,15 +104,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     except requests.exceptions.RequestException as e:
-        logging.error(f"DSM request failed: {str(e)}")
+        logging.error(str(e))
         return func.HttpResponse(
             f"DSM request failed: {str(e)}",
-            status_code=500
-        )
-
-    except Exception as e:
-        logging.error(f"Unexpected error: {str(e)}")
-        return func.HttpResponse(
-            f"Unexpected error: {str(e)}",
             status_code=500
         )
