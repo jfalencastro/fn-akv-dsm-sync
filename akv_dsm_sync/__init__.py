@@ -1,8 +1,7 @@
 import azure.functions as func
 import logging
-import json
-import requests
+import sys
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("Imports OK")
-    return func.HttpResponse("OK", status_code=200)
+    logging.info(str(sys.path))
+    return func.HttpResponse("OK")
