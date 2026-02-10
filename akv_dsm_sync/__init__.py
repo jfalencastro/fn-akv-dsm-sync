@@ -3,26 +3,12 @@ import azure.functions as func
 from azure.identity import ManagedIdentityCredential
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("Início da function – teste Managed Identity")
+    logging.info("Teste MI iniciado")
 
-    try:
-        credential = ManagedIdentityCredential()
+    credential = ManagedIdentityCredential()
 
-        logging.info("ManagedIdentityCredential criado")
+    token = credential.get_token("https://management.azure.com/.default")
 
-        token = credential.get_token("https://vault.azure.net/.default")
+    logging.info("Token Azure obtido")
 
-        logging.info("Token obtido com sucesso")
-
-        return func.HttpResponse(
-            body="Managed Identity OK",
-            status_code=200
-        )
-
-    except Exception as e:
-        logging.error("Erro ao usar Managed Identity", exc_info=True)
-
-        return func.HttpResponse(
-            body=f"Erro MI: {str(e)}",
-            status_code=500
-        )
+    return func.HttpResponse("MI OK", status_code=200)
