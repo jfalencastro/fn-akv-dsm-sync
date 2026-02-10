@@ -62,7 +62,7 @@ def create_or_update_dsm_secret(token: str, dsm_payload: dict):
     response = requests.post(
         f"{os.environ['DSM_BASE_URL']}/iso/sctm/secret",
         headers=headers,
-        data=form_payload,
+        json=form_payload,
         timeout=10
     )
 
