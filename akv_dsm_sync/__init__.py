@@ -96,7 +96,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             secret_value.encode("utf-8")
         ).decode("utf-8")
 
-        dsm_payload["secret"] = encoded_secret
+        dsm_payload["data"] = encoded_secret
 
         for k, v in dsm_payload.items():
             logging.info("DSM payload FINAL %s = %s (%s)", k, v, type(v))
