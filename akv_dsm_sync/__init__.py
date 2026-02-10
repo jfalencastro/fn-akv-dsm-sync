@@ -48,7 +48,11 @@ def create_or_update_dsm_secret(token, payload):
 
 def main(event: func.EventGridEvent):
     try:
-        body = event.get_json()
+        event_data = event.get_json()
+
+        secret_name = event_data["data"]["ObjectName"]
+        vault_name = event_data["data"]["VaultName"]
+
         logging.info("Evento recebido: %s", body)
         
         # ---------
@@ -89,17 +93,10 @@ def main(event: func.EventGridEvent):
         token = get_dsm_token()
         result = create_or_update_dsm_secret(token, dsm_payload)
 
-        '''
-        return func.HttpResponse(
-            json.dumps(result),
-            status_code=200,
-            mimetype="application/json"
-        )'''
+        logging.info("Processamento concluído com sucesso")
+        # não retorna nada
 
-    except Exception as e:
+    except Exception:
         logging.exception("Erro durante execução da Function")
-        return func.HttpResponse(
-            json.dumps({"status": "error", "message": str(e)}),
-            status_code=500,
-            mimetype="application/json"
-        )
+        raise
+
