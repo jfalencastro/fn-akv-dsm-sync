@@ -46,7 +46,7 @@ def create_or_update_dsm_secret(token, payload):
     return resp.json()
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(event: func.EventGridEvent):
     try:
         body = req.get_json()
 
