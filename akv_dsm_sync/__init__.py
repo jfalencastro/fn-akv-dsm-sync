@@ -1,7 +1,13 @@
 import logging
-import azure.functions as func
 import requests
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("Requests version loaded")
-    return func.HttpResponse("OK", status_code=200)
+def main(req):
+    logging.info("Function started")
+
+    try:
+        logging.info("Requests version: %s", requests.__version__)
+    except Exception as e:
+        logging.error("Failed importing requests: %s", str(e))
+        raise
+
+    return "OK"
