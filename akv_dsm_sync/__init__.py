@@ -46,37 +46,23 @@ def get_dsm_token() -> str:
     return token
 
 
-def create_or_update_dsm_secret(token: str, payload: dict):
-    url = f"{os.environ['DSM_BASE_URL']}{os.environ['DSM_SECRET_PATH']}"
-
+def create_or_update_dsm_secret(token, payload):
     headers = {
         "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/x-www-form-urlencoded"
     }
-
-    dsm_request = {
-        "data": payload
-    }
-
-    logging.info("Enviando secret para o DSM")
-    logging.debug("Payload DSM final: %s", json.dumps(dsm_request))
 
     response = requests.post(
-        url,
-        json=dsm_request,
+        f"{DSM_URL}/iso/sctm/secret",
         headers=headers,
-        timeout=10
+        data=payload   # ⬅️ AQUI é o ponto crítico
     )
 
     if response.status_code not in (200, 201):
-        logging.error(
-            "Erro DSM (%s): %s",
-            response.status_code,
-            response.text
-        )
-        raise Exception("Falha ao criar secret no DSM")
+        raise Exception(f"Erro DSM ({response.status_code}): {response.text}")
 
     return response.json()
+
 
 
 
@@ -108,6 +94,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # 2️⃣ Token DSM
         token = get_dsm_token()
+
+        for k, v in dsm_payload.items():
+            logging.info("DSM payload %s = %s (%s)", k, v, type(v))
+
 
         # 3️⃣ Cria / atualiza secret no DSM
         result = create_or_update_dsm_secret(token, dsm_payload)
