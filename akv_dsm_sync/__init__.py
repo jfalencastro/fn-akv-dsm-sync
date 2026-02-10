@@ -102,8 +102,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             logging.info("DSM payload FINAL %s = %s (%s)", k, v, type(v))
 
 
-        logging.info("Tipo da secret enviada ao DSM: %s", type(dsm_payload["secret"]))
-        logging.info("Secret (base64) enviada: %s", dsm_payload["secret"])
+        logging.info("Tipo da secret enviada ao DSM: %s", type(dsm_payload["data"]))
+        logging.info("Secret (base64) enviada: %s", dsm_payload["data"])
 
 
         # 2️⃣ Token DSM
