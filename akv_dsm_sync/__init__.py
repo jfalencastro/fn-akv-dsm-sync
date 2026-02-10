@@ -46,22 +46,32 @@ def get_dsm_token() -> str:
     return token
 
 
-def create_or_update_dsm_secret(token, payload):
+def create_or_update_dsm_secret(token: str, dsm_payload: dict):
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
+    # 🔥 GARANTIA ABSOLUTA: tudo é string e flat
+    form_payload = {}
+    for k, v in dsm_payload.items():
+        if isinstance(v, (dict, list)):
+            raise Exception(f"Campo '{k}' não pode ser objeto ou array para o DSM")
+        form_payload[k] = str(v)
+
     response = requests.post(
-        f"{DSM_URL}/iso/sctm/secret",
+        f"{os.environ['DSM_BASE_URL']}/iso/sctm/secret",
         headers=headers,
-        data=payload   # ⬅️ AQUI é o ponto crítico
+        data=form_payload,
+        timeout=10
     )
 
     if response.status_code not in (200, 201):
-        raise Exception(f"Erro DSM ({response.status_code}): {response.text}")
+        logging.error("Erro DSM (%s): %s", response.status_code, response.text)
+        raise Exception("Falha ao criar secret no DSM")
 
     return response.json()
+
 
 
 
@@ -88,16 +98,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         dsm_payload["secret"] = encoded_secret
 
+        for k, v in dsm_payload.items():
+            logging.info("DSM payload FINAL %s = %s (%s)", k, v, type(v))
+
+
         logging.info("Tipo da secret enviada ao DSM: %s", type(dsm_payload["secret"]))
         logging.info("Secret (base64) enviada: %s", dsm_payload["secret"])
 
 
         # 2️⃣ Token DSM
         token = get_dsm_token()
-
-        for k, v in dsm_payload.items():
-            logging.info("DSM payload %s = %s (%s)", k, v, type(v))
-
 
         # 3️⃣ Cria / atualiza secret no DSM
         result = create_or_update_dsm_secret(token, dsm_payload)
