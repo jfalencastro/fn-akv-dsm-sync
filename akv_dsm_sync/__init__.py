@@ -48,8 +48,9 @@ def create_or_update_dsm_secret(token, payload):
 
 def main(event: func.EventGridEvent):
     try:
-        body = req.get_json()
-
+        body = event.get_json()
+        logging.info("Evento recebido: %s", body)
+        
         # ---------
         # 1) Monta o objeto da secret (IGUAL AO POSTMAN)
         # ---------
@@ -80,17 +81,20 @@ def main(event: func.EventGridEvent):
             "data": secret_b64
         }
 
+        logging.info("Processamento concluído com sucesso")
+        
         # ---------
         # 4) OAuth2 + POST
         # ---------
         token = get_dsm_token()
         result = create_or_update_dsm_secret(token, dsm_payload)
 
+        '''
         return func.HttpResponse(
             json.dumps(result),
             status_code=200,
             mimetype="application/json"
-        )
+        )'''
 
     except Exception as e:
         logging.exception("Erro durante execução da Function")
