@@ -53,16 +53,30 @@ def create_or_update_dsm_secret(token: str, payload: dict):
         "Content-Type": "application/json"
     }
 
-    logging.info("Enviando secret para o DSM")
-    logging.debug("Payload DSM: %s", json.dumps(payload))
+    dsm_request = {
+        "data": payload
+    }
 
-    response = requests.post(url, json=payload, headers=headers, timeout=10)
+    logging.info("Enviando secret para o DSM")
+    logging.debug("Payload DSM final: %s", json.dumps(dsm_request))
+
+    response = requests.post(
+        url,
+        json=dsm_request,
+        headers=headers,
+        timeout=10
+    )
 
     if response.status_code not in (200, 201):
-        logging.error("Erro DSM (%s): %s", response.status_code, response.text)
+        logging.error(
+            "Erro DSM (%s): %s",
+            response.status_code,
+            response.text
+        )
         raise Exception("Falha ao criar secret no DSM")
 
     return response.json()
+
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
