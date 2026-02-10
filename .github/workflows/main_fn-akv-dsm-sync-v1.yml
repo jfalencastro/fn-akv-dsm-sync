@@ -42,12 +42,7 @@ jobs:
       # Optional: Add step to run tests here
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip \
-                host.json \
-                requirements.txt \
-                .python_packages \
-                akv_dsm_sync
-
+        run: zip -r release.zip host.json requirements.txt .python_packages akv_dsm_sync
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -91,4 +86,5 @@ jobs:
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
 
           
+
 
