@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import base64
 import requests
 import azure.functions as func
 
@@ -95,7 +96,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
         # injeta o valor da secret no payload DSM
-        dsm_payload["secret"] = secret_value
+        encoded_secret = base64.b64encode(
+            secret_value.encode("utf-8")
+        ).decode("utf-8")
+
+        dsm_payload["secret"] = encoded_secret
+
 
         # 2️⃣ Token DSM
         token = get_dsm_token()
