@@ -102,6 +102,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         dsm_payload["secret"] = encoded_secret
 
+        logging.info("Tipo da secret enviada ao DSM: %s", type(dsm_payload["secret"]))
+        logging.info("Secret (base64) enviada: %s", dsm_payload["secret"])
+
 
         # 2️⃣ Token DSM
         token = get_dsm_token()
